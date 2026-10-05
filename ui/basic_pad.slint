@@ -11,9 +11,42 @@ export component BasicPad {
 
     callback button-pressed(string);
 
-    GridLayout {
+    VerticalLayout {
         spacing: LT.gap;
-        padding: LT.pad;
+
+        // Memory row: MC · MR · M+ · M− · MS
+        // (the logic existed in the backend but no pad ever exposed it)
+        HorizontalLayout {
+            width: 282px;
+            padding-left: LT.pad;
+            padding-right: LT.pad;
+            spacing: LT.gap;
+
+            CalcButton {
+                lbl: "MC"; btn-width: 42px; fs: 14px; fg: LT.t-dim;
+                clicked => { root.button-pressed("MC"); }
+            }
+            CalcButton {
+                lbl: "MR"; btn-width: 42px; fs: 14px; fg: LT.t-dim;
+                clicked => { root.button-pressed("MR"); }
+            }
+            CalcButton {
+                lbl: "M+"; btn-width: 42px; fs: 14px; fg: LT.t-dim;
+                clicked => { root.button-pressed("M+"); }
+            }
+            CalcButton {
+                lbl: "M−"; btn-width: 42px; fs: 14px; fg: LT.t-dim;
+                clicked => { root.button-pressed("M−"); }
+            }
+            CalcButton {
+                lbl: "MS"; btn-width: 42px; fs: 14px; fg: LT.t-dim;
+                clicked => { root.button-pressed("MS"); }
+            }
+        }
+
+        GridLayout {
+            spacing: LT.gap;
+            padding: LT.pad;
 
         // Row 0
         Row {
@@ -52,22 +85,19 @@ export component BasicPad {
         // Row 1
         Row {
             CalcButton {
-                has-icon: true;
-                icon: @image-url("svg/7.svg");
+                lbl: "7";
                 is-square: true;
                 clicked => { root.button-pressed("7"); }
             }
 
             CalcButton {
-                has-icon: true;
-                icon: @image-url("svg/8.svg");
+                lbl: "8";
                 is-square: true;
                 clicked => { root.button-pressed("8"); }
             }
 
             CalcButton {
-                has-icon: true;
-                icon: @image-url("svg/9.svg");
+                lbl: "9";
                 is-square: true;
                 clicked => { root.button-pressed("9"); }
             }
@@ -84,22 +114,19 @@ export component BasicPad {
         // Row 2
         Row {
             CalcButton {
-                has-icon: true;
-                icon: @image-url("svg/4.svg");
+                lbl: "4";
                 is-square: true;
                 clicked => { root.button-pressed("4"); }
             }
 
             CalcButton {
-                has-icon: true;
-                icon: @image-url("svg/5.svg");
+                lbl: "5";
                 is-square: true;
                 clicked => { root.button-pressed("5"); }
             }
 
             CalcButton {
-                has-icon: true;
-                icon: @image-url("svg/6.svg");
+                lbl: "6";
                 is-square: true;
                 clicked => { root.button-pressed("6"); }
             }
@@ -116,22 +143,19 @@ export component BasicPad {
         // Row 3
         Row {
             CalcButton {
-                has-icon: true;
-                icon: @image-url("svg/1.svg");
+                lbl: "1";
                 is-square: true;
                 clicked => { root.button-pressed("1"); }
             }
 
             CalcButton {
-                has-icon: true;
-                icon: @image-url("svg/2.svg");
+                lbl: "2";
                 is-square: true;
                 clicked => { root.button-pressed("2"); }
             }
 
             CalcButton {
-                has-icon: true;
-                icon: @image-url("svg/3.svg");
+                lbl: "3";
                 is-square: true;
                 clicked => { root.button-pressed("3"); }
             }
@@ -149,8 +173,7 @@ export component BasicPad {
         Row {
             CalcButton {
                 colspan: 2; cols: 2;
-                has-icon: true;
-                icon: @image-url("svg/0.svg");
+                lbl: "0";
                 clicked => { root.button-pressed("0"); }
             }
 
@@ -170,6 +193,7 @@ export component BasicPad {
                 prs: LT.eq-prs;
                 clicked => { root.button-pressed("="); }
             }
+        }
         }
     }
 }

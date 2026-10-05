@@ -2678,6 +2678,7 @@ dependencies = [
  "chrono",
  "slint",
  "slint-build",
+ "wasm-bindgen",
 ]
 
 [[package]]

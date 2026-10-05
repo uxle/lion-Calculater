@@ -14,6 +14,7 @@ export component HistoryPanel {
     in property <length>         container-height;  // pass parent.height from caller
     callback close();
     callback item-clicked(int);
+    callback cleared();               // "Clear" button — history.clear() had no UI
 
     x: root.open ? root.container-width - self.width : root.container-width;
     animate x { duration: 280ms; easing: cubic-bezier(0.2, 1.0, 0.3, 1.0); }
@@ -41,6 +42,14 @@ export component HistoryPanel {
             HorizontalLayout {
                 Text { text: "History"; color: LT.t-main; font-size: 16px; font-weight: 700; }
                 Rectangle { horizontal-stretch: 1; }
+                // Clear all entries
+                Rectangle {
+                    width: 52px; height: 28px; border-radius: 8px;
+                    background: ta-cle.has-hover ? LT.btn-hov : transparent;
+                    ta-cle := TouchArea { clicked => { root.cleared(); } }
+                    Text { text: "Clear"; color: LT.t-dn; font-size: 12px; font-weight: 500;
+                        horizontal-alignment: center; vertical-alignment: center; }
+                }
                 Rectangle {
                     width: 28px; height: 28px; border-radius: 8px;
                     background: ta-cl.has-hover ? LT.btn-hov : transparent;
@@ -72,7 +81,23 @@ export component HistoryPanel {
                     alignment: center;
                     padding: 8px;
                     spacing: 3px;
-                    Text { text: entry.expr;   color: LT.t-mut;  font-size: 12px; overflow: elide; }
+                    HorizontalLayout {
+                        spacing: 8px;
+                        Text {
+                            text: entry.expr;
+                            color: LT.t-mut;
+                            font-size: 12px;
+                            overflow: elide;
+                            horizontal-stretch: 1;
+                        }
+                        // Timestamp (was computed but never displayed anywhere)
+                        Text {
+                            text: entry.ts;
+                            color: LT.t-mut;
+                            font-size: 10px;
+                            opacity: 0.7;
+                        }
+                    }
                     Text { text: "= " + entry.result; color: LT.t-main; font-size: 15px;
                         font-weight: 500; overflow: elide; }
                 }

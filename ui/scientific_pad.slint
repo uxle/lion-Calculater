@@ -7,64 +7,162 @@ import { LT } from "tokens.slint";
 import { CalcButton } from "calc_button.slint";
 
 // ── ScientificPad ──────────────────────────────────────────────────────────
+// Expression-entry pad: functions insert "sin("-style prefixes, the typed
+// formula is shown on the expression line and evaluated by the parser on "=".
+// The toolbar row carries the 2nd-function toggle (sin→asin, log→10ˣ …),
+// the DEG/RAD switch, RND, ±, backspace and AC.
 export component ScientificPad {
+    in property <bool> deg-mode: true;      // label for the unit toggle
+    in-out property <bool> inv: false;      // 2nd-function toggle state
     callback button-pressed(string);
-    GridLayout {
+
+    VerticalLayout {
         spacing: LT.gap;
-        padding: LT.pad;
 
-        Row {
-            CalcButton { lbl: "sin"; fs: 16px; clicked => { root.button-pressed("sin"); } }
-            CalcButton { lbl: "cos"; fs: 16px; clicked => { root.button-pressed("cos"); } }
-            CalcButton { lbl: "tan"; fs: 16px; clicked => { root.button-pressed("tan"); } }
-            CalcButton { lbl: "AC";  fg: LT.t-dn; clicked => { root.button-pressed("AC"); } }
-            CalcButton { has-icon: true; icon: @image-url("svg/delete-left.svg"); fg: LT.t-dn; clicked => { root.button-pressed("⌫"); } }
-            CalcButton { has-icon: true; icon: @image-url("svg/divide.svg"); fg: LT.t-op; clicked => { root.button-pressed("÷"); } }
-        }
+        // Toolbar: 2nd · DEG/RAD · RND · ± · ⌫ · AC
+        HorizontalLayout {
+            width: 412px;
+            padding-left: LT.pad;
+            padding-right: LT.pad;
+            spacing: LT.gap;
 
-        Row {
-            CalcButton { lbl: "log"; fs: 16px; clicked => { root.button-pressed("log"); } }
-            CalcButton { lbl: "ln";            clicked => { root.button-pressed("ln");  } }
-            CalcButton { has-icon: true; icon: @image-url("svg/square-root-variable.svg"); clicked => { root.button-pressed("√x"); } }
-            CalcButton { has-icon: true; icon: @image-url("svg/7.svg"); clicked => { root.button-pressed("7"); } }
-            CalcButton { has-icon: true; icon: @image-url("svg/8.svg"); clicked => { root.button-pressed("8"); } }
-            CalcButton { has-icon: true; icon: @image-url("svg/9.svg"); clicked => { root.button-pressed("9"); } }
-        }
-
-        Row {
-            CalcButton { lbl: "π"; clicked => { root.button-pressed("π"); } }
-            CalcButton { lbl: "e"; clicked => { root.button-pressed("e"); } }
-            CalcButton { has-icon: true; icon: @image-url("svg/superscript.svg"); clicked => { root.button-pressed("xʸ"); } }
-            CalcButton { has-icon: true; icon: @image-url("svg/4.svg"); clicked => { root.button-pressed("4"); } }
-            CalcButton { has-icon: true; icon: @image-url("svg/5.svg"); clicked => { root.button-pressed("5"); } }
-            CalcButton { has-icon: true; icon: @image-url("svg/6.svg"); clicked => { root.button-pressed("6"); } }
-        }
-
-        Row {
-            CalcButton { lbl: "x!";  fs: 16px; clicked => { root.button-pressed("x!"); } }
-            CalcButton { lbl: "RND"; fs: 14px; clicked => { root.button-pressed("RND"); } }
-            CalcButton { lbl: "1/x"; fs: 16px; clicked => { root.button-pressed("1/x"); } }
-            CalcButton { has-icon: true; icon: @image-url("svg/1.svg"); clicked => { root.button-pressed("1"); } }
-            CalcButton { has-icon: true; icon: @image-url("svg/2.svg"); clicked => { root.button-pressed("2"); } }
-            CalcButton { has-icon: true; icon: @image-url("svg/3.svg"); clicked => { root.button-pressed("3"); } }
-        }
-
-        Row {
-            CalcButton { colspan: 2; cols: 2; has-icon: true; icon: @image-url("svg/xmark.svg"); fg: LT.t-op; clicked => { root.button-pressed("×"); } }
-            CalcButton { has-icon: true; icon: @image-url("svg/minus.svg"); fg: LT.t-op; clicked => { root.button-pressed("−"); } }
-            CalcButton { has-icon: true; icon: @image-url("svg/0.svg"); clicked => { root.button-pressed("0"); } }
-            CalcButton { lbl: "."; clicked => { root.button-pressed("."); } }
-            CalcButton { has-icon: true; icon: @image-url("svg/plus.svg"); fg: LT.t-op; clicked => { root.button-pressed("+"); } }
-        }
-
-        Row {
-            CalcButton { colspan: 2; cols: 2; has-icon: true; icon: @image-url("svg/percent.svg"); fg: LT.t-op; clicked => { root.button-pressed("%"); } }
             CalcButton {
-                colspan: 4; cols: 4;
-                has-icon: true; icon: @image-url("svg/equals.svg");
-                fg: #ffffff;
-                bg: LT.eq; hov: LT.eq-hov; prs: LT.eq-prs;
-                clicked => { root.button-pressed("="); }
+                lbl: "2nd"; fs: 14px; h: 36px; btn-width: 55px;
+                fg: root.inv ? LT.t-op : LT.t-dim;
+                bg: root.inv ? LT.primary-soft : LT.btn;
+                hov: root.inv ? LT.primary-soft : LT.btn-hov;
+                clicked => { root.inv = !root.inv; }
+            }
+            CalcButton {
+                lbl: root.deg-mode ? "DEG" : "RAD"; fs: 14px; h: 36px; btn-width: 55px;
+                fg: LT.t-op;
+                clicked => { root.button-pressed("DEG/RAD"); }
+            }
+            CalcButton {
+                lbl: "RND"; fs: 14px; h: 36px; btn-width: 55px; fg: LT.t-dim;
+                clicked => { root.button-pressed("RND"); }
+            }
+            CalcButton {
+                lbl: "±"; fs: 16px; h: 36px; btn-width: 55px; fg: LT.t-dim;
+                clicked => { root.button-pressed("±"); }
+            }
+            CalcButton {
+                has-icon: true; icon: @image-url("svg/delete-left.svg");
+                h: 36px; btn-width: 55px; fg: LT.t-dn;
+                clicked => { root.button-pressed("⌫"); }
+            }
+            CalcButton {
+                lbl: "AC"; fs: 14px; h: 36px; btn-width: 55px; fg: LT.t-dn;
+                clicked => { root.button-pressed("AC"); }
+            }
+        }
+
+        GridLayout {
+            spacing: LT.gap;
+            padding: LT.pad;
+
+            // Row 1: trig + logarithms + ÷   (2nd swaps to inverses / powers)
+            Row {
+                CalcButton {
+                    lbl: root.inv ? "asin" : "sin"; fs: 16px;
+                    fg: root.inv ? LT.t-acc : LT.t-main;
+                    clicked => { root.button-pressed(root.inv ? "asin" : "sin"); }
+                }
+                CalcButton {
+                    lbl: root.inv ? "acos" : "cos"; fs: 16px;
+                    fg: root.inv ? LT.t-acc : LT.t-main;
+                    clicked => { root.button-pressed(root.inv ? "acos" : "cos"); }
+                }
+                CalcButton {
+                    lbl: root.inv ? "atan" : "tan"; fs: 16px;
+                    fg: root.inv ? LT.t-acc : LT.t-main;
+                    clicked => { root.button-pressed(root.inv ? "atan" : "tan"); }
+                }
+                CalcButton {
+                    lbl: root.inv ? "10ˣ" : "log"; fs: 16px;
+                    fg: root.inv ? LT.t-acc : LT.t-main;
+                    clicked => { root.button-pressed(root.inv ? "10ˣ" : "log"); }
+                }
+                CalcButton {
+                    lbl: root.inv ? "eˣ" : "ln"; fs: 16px;
+                    fg: root.inv ? LT.t-acc : LT.t-main;
+                    clicked => { root.button-pressed(root.inv ? "eˣ" : "ln"); }
+                }
+                CalcButton {
+                    has-icon: true; icon: @image-url("svg/divide.svg");
+                    fg: LT.t-op;
+                    clicked => { root.button-pressed("÷"); }
+                }
+            }
+
+            // Row 2: √/x² · constants · 7 8 9
+            Row {
+                CalcButton {
+                    lbl: root.inv ? "x²" : "√x"; fs: 16px;
+                    fg: root.inv ? LT.t-acc : LT.t-main;
+                    clicked => { root.button-pressed(root.inv ? "x²" : "√x"); }
+                }
+                CalcButton { lbl: "π"; clicked => { root.button-pressed("π"); } }
+                CalcButton { lbl: "e"; clicked => { root.button-pressed("e"); } }
+                CalcButton { lbl: "7"; clicked => { root.button-pressed("7"); } }
+                CalcButton { lbl: "8"; clicked => { root.button-pressed("8"); } }
+                CalcButton { lbl: "9"; clicked => { root.button-pressed("9"); } }
+            }
+
+            // Row 3: power · factorial · reciprocal · 4 5 6
+            Row {
+                CalcButton {
+                    has-icon: true; icon: @image-url("svg/superscript.svg");
+                    clicked => { root.button-pressed("xʸ"); }
+                }
+                CalcButton { lbl: "x!"; fs: 16px; clicked => { root.button-pressed("x!"); } }
+                CalcButton { lbl: "1/x"; fs: 16px; clicked => { root.button-pressed("1/x"); } }
+                CalcButton { lbl: "4"; clicked => { root.button-pressed("4"); } }
+                CalcButton { lbl: "5"; clicked => { root.button-pressed("5"); } }
+                CalcButton { lbl: "6"; clicked => { root.button-pressed("6"); } }
+            }
+
+            // Row 4: parentheses · modulo · 1 2 3
+            Row {
+                CalcButton { lbl: "("; fs: 18px; clicked => { root.button-pressed("("); } }
+                CalcButton { lbl: ")"; fs: 18px; clicked => { root.button-pressed(")"); } }
+                CalcButton {
+                    has-icon: true; icon: @image-url("svg/percent.svg"); fg: LT.t-op;
+                    clicked => { root.button-pressed("%"); }
+                }
+                CalcButton { lbl: "1"; clicked => { root.button-pressed("1"); } }
+                CalcButton { lbl: "2"; clicked => { root.button-pressed("2"); } }
+                CalcButton { lbl: "3"; clicked => { root.button-pressed("3"); } }
+            }
+
+            // Row 5: × − 0 . +
+            Row {
+                CalcButton {
+                    colspan: 2; cols: 2;
+                    has-icon: true; icon: @image-url("svg/xmark.svg"); fg: LT.t-op;
+                    clicked => { root.button-pressed("×"); }
+                }
+                CalcButton {
+                    has-icon: true; icon: @image-url("svg/minus.svg"); fg: LT.t-op;
+                    clicked => { root.button-pressed("−"); }
+                }
+                CalcButton { lbl: "0"; clicked => { root.button-pressed("0"); } }
+                CalcButton { lbl: "."; clicked => { root.button-pressed("."); } }
+                CalcButton {
+                    has-icon: true; icon: @image-url("svg/plus.svg"); fg: LT.t-op;
+                    clicked => { root.button-pressed("+"); }
+                }
+            }
+
+            // Row 6: full-width equals
+            Row {
+                CalcButton {
+                    colspan: 6; cols: 6;
+                    has-icon: true; icon: @image-url("svg/equals.svg");
+                    fg: #ffffff;
+                    bg: LT.eq; hov: LT.eq-hov; prs: LT.eq-prs;
+                    clicked => { root.button-pressed("="); }
+                }
             }
         }
     }
