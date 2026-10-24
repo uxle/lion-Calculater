@@ -10,6 +10,7 @@ import { BaseButton } from "base_button.slint";
 // ── ProgrammerPad ──────────────────────────────────────────────────────────
 export component ProgrammerPad {
     in property <string> active-base: "DEC";
+    in property <string> active-width: "QWORD";
     callback button-pressed(string);
 
     // Per-base enablement flags
@@ -18,9 +19,50 @@ export component ProgrammerPad {
     property <bool> oct-en:  root.active-base == "HEX" || root.active-base == "DEC" || root.active-base == "OCT";
     // BIN: only 0 and 1 are valid (no helper flag needed — handle per-button)
 
-    GridLayout {
+    VerticalLayout {
         spacing: LT.gap;
-        padding: LT.pad;
+
+        // Bit-width toolbar: QWORD · DWORD · WORD · BYTE
+        // (the backend field existed but no UI could ever change it)
+        HorizontalLayout {
+            width: 412px;
+            padding-left: LT.pad;
+            padding-right: LT.pad;
+            spacing: LT.gap;
+
+            CalcButton {
+                lbl: "QWORD"; fs: 13px; h: 36px; btn-width: 87px;
+                fg: root.active-width == "QWORD" ? LT.t-op : LT.t-dim;
+                bg: root.active-width == "QWORD" ? LT.primary-soft : LT.btn;
+                hov: root.active-width == "QWORD" ? LT.primary-soft : LT.btn-hov;
+                clicked => { root.button-pressed("WIDTH:64"); }
+            }
+            CalcButton {
+                lbl: "DWORD"; fs: 13px; h: 36px; btn-width: 87px;
+                fg: root.active-width == "DWORD" ? LT.t-op : LT.t-dim;
+                bg: root.active-width == "DWORD" ? LT.primary-soft : LT.btn;
+                hov: root.active-width == "DWORD" ? LT.primary-soft : LT.btn-hov;
+                clicked => { root.button-pressed("WIDTH:32"); }
+            }
+            CalcButton {
+                lbl: "WORD"; fs: 13px; h: 36px; btn-width: 87px;
+                fg: root.active-width == "WORD" ? LT.t-op : LT.t-dim;
+                bg: root.active-width == "WORD" ? LT.primary-soft : LT.btn;
+                hov: root.active-width == "WORD" ? LT.primary-soft : LT.btn-hov;
+                clicked => { root.button-pressed("WIDTH:16"); }
+            }
+            CalcButton {
+                lbl: "BYTE"; fs: 13px; h: 36px; btn-width: 87px;
+                fg: root.active-width == "BYTE" ? LT.t-op : LT.t-dim;
+                bg: root.active-width == "BYTE" ? LT.primary-soft : LT.btn;
+                hov: root.active-width == "BYTE" ? LT.primary-soft : LT.btn-hov;
+                clicked => { root.button-pressed("WIDTH:8"); }
+            }
+        }
+
+        GridLayout {
+            spacing: LT.gap;
+            padding: LT.pad;
 
         // Row 1: Base selectors + AC + backspace
         Row {
@@ -43,15 +85,15 @@ export component ProgrammerPad {
             CalcButton { lbl: "B"; fg: root.hex-en ? LT.t-main : LT.t-dim;
                 clicked => { if root.hex-en { root.button-pressed("B"); } } }
             // 7: disabled in BIN
-            CalcButton { has-icon: true; icon: @image-url("svg/7.svg");
+            CalcButton { lbl: "7";
                 fg: root.oct-en ? LT.t-main : LT.t-dim;
                 clicked => { if root.oct-en { root.button-pressed("7"); } } }
             // 8: disabled in OCT and BIN
-            CalcButton { has-icon: true; icon: @image-url("svg/8.svg");
+            CalcButton { lbl: "8";
                 fg: root.dec-en ? LT.t-main : LT.t-dim;
                 clicked => { if root.dec-en { root.button-pressed("8"); } } }
             // 9: disabled in OCT and BIN
-            CalcButton { has-icon: true; icon: @image-url("svg/9.svg");
+            CalcButton { lbl: "9";
                 fg: root.dec-en ? LT.t-main : LT.t-dim;
                 clicked => { if root.dec-en { root.button-pressed("9"); } } }
             CalcButton { lbl: "AND"; fs: 14px; fg: LT.t-acc;
@@ -65,13 +107,13 @@ export component ProgrammerPad {
             CalcButton { lbl: "D"; fg: root.hex-en ? LT.t-main : LT.t-dim;
                 clicked => { if root.hex-en { root.button-pressed("D"); } } }
             // 4-6: disabled in BIN
-            CalcButton { has-icon: true; icon: @image-url("svg/4.svg");
+            CalcButton { lbl: "4";
                 fg: root.oct-en ? LT.t-main : LT.t-dim;
                 clicked => { if root.oct-en { root.button-pressed("4"); } } }
-            CalcButton { has-icon: true; icon: @image-url("svg/5.svg");
+            CalcButton { lbl: "5";
                 fg: root.oct-en ? LT.t-main : LT.t-dim;
                 clicked => { if root.oct-en { root.button-pressed("5"); } } }
-            CalcButton { has-icon: true; icon: @image-url("svg/6.svg");
+            CalcButton { lbl: "6";
                 fg: root.oct-en ? LT.t-main : LT.t-dim;
                 clicked => { if root.oct-en { root.button-pressed("6"); } } }
             CalcButton { lbl: "OR"; fg: LT.t-acc; clicked => { root.button-pressed("OR"); } }
@@ -84,12 +126,12 @@ export component ProgrammerPad {
             CalcButton { lbl: "F"; fg: root.hex-en ? LT.t-main : LT.t-dim;
                 clicked => { if root.hex-en { root.button-pressed("F"); } } }
             // 1: always enabled (valid in all bases)
-            CalcButton { has-icon: true; icon: @image-url("svg/1.svg"); clicked => { root.button-pressed("1"); } }
+            CalcButton { lbl: "1"; clicked => { root.button-pressed("1"); } }
             // 2-3: disabled in BIN
-            CalcButton { has-icon: true; icon: @image-url("svg/2.svg");
+            CalcButton { lbl: "2";
                 fg: root.oct-en ? LT.t-main : LT.t-dim;
                 clicked => { if root.oct-en { root.button-pressed("2"); } } }
-            CalcButton { has-icon: true; icon: @image-url("svg/3.svg");
+            CalcButton { lbl: "3";
                 fg: root.oct-en ? LT.t-main : LT.t-dim;
                 clicked => { if root.oct-en { root.button-pressed("3"); } } }
             CalcButton { lbl: "XOR"; fs: 14px; fg: LT.t-acc;
@@ -100,7 +142,7 @@ export component ProgrammerPad {
         Row {
             CalcButton { lbl: "<<"; fg: LT.t-op; clicked => { root.button-pressed("<<"); } }
             CalcButton { lbl: ">>"; fg: LT.t-op; clicked => { root.button-pressed(">>"); } }
-            CalcButton { colspan: 2; cols: 2; has-icon: true; icon: @image-url("svg/0.svg");
+            CalcButton { colspan: 2; cols: 2; lbl: "0";
                 clicked => { root.button-pressed("0"); } }
             CalcButton { lbl: "NOT"; fs: 14px; fg: LT.t-acc;
                 clicked => { root.button-pressed("NOT"); } }
@@ -109,6 +151,7 @@ export component ProgrammerPad {
                 fg: #ffffff;
                 bg: LT.eq; hov: LT.eq-hov; prs: LT.eq-prs;
                 clicked => { root.button-pressed("="); } }
+        }
         }
     }
 }

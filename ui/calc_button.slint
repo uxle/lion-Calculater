@@ -12,6 +12,11 @@ export component CalcButton inherits Rectangle {
     in property <bool> has-icon: false;
     in property <bool> is-square: false;
     in property <int> cols: 1;
+    // Optional explicit width override (used by the compact memory row);
+    // 0px means "derive from cols".
+    in property <length> btn-width: 0px;
+    // Optional height override (slim toolbar rows: 2nd/DEG-RAD, bit widths).
+    in property <length> h: 55px;
     in property <color> fg:  LT.t-main;
     in property <color> bg:  LT.btn;
     in property <color> hov: LT.btn-hov;
@@ -19,8 +24,9 @@ export component CalcButton inherits Rectangle {
     in property <length> fs:  19px;
     callback clicked();
 
-    width: root.cols * 55px + (root.cols - 1) * 10px;
-    height: 55px;
+    width: root.btn-width > 0px ? root.btn-width
+         : root.cols * 55px + (root.cols - 1) * 10px;
+    height: root.h;
     border-radius: LT.r-btn;
     border-width: 1px;
     border-color: LT.bdr;

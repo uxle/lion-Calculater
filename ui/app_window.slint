@@ -16,8 +16,12 @@ import { HistoryPanel }       from "history_panel.slint";
 // ═══════════════════════════════════════════════════════════════════════════
 export component MainWindow inherits Window {
     title: "Lion Calculator";
-    property <length> target-width: root.current-mode == 0 ? 282px : root.current-mode == 1 ? 412px : root.current-mode == 2 ? 347px : 412px;
-    property <length> target-height: root.current-mode == 0 ? 568px : root.current-mode == 1 ? 633px : root.current-mode == 2 ? 633px : 568px;
+    // Basic: 282px wide (4 cols + memory row); Sci/Fin/Pro: 6 cols (412px).
+    // Heights: pad rows + toolbar rows (Sci: 2nd/DEG toolbar, Pro: widths).
+    property <length> target-width: root.current-mode == 0 ? 282px : 412px;
+    property <length> target-height: root.current-mode == 0 ? 633px
+                                   : root.current-mode == 1 ? 679px
+                                   : root.current-mode == 2 ? 633px : 614px;
 
     width: target-width;
     height: target-height;
@@ -31,7 +35,9 @@ export component MainWindow inherits Window {
     in property <string> expr-text:     "";
     in-out property <int> current-mode:  0;
     in property <bool> deg-mode:      true;
+    in property <bool> display-preview: false;   // dim the live scientific preview
     in property <string> active-base:   "DEC";
+    in property <string> active-width:  "QWORD";
     in property <string> hex-text:      "0";
     in property <string> dec-text:      "0";
     in property <string> oct-text:      "0";
@@ -49,6 +55,7 @@ export component MainWindow inherits Window {
     callback button-pressed(string);
     callback mode-changed(int);
     callback history-clicked(int);
+    callback history-cleared();
 
     private property <bool> hist-open: false;
 
@@ -78,13 +85,22 @@ export component MainWindow inherits Window {
             if event.text == "^" { root.button-pressed("xʸ"); return accept; }
             if event.text == "(" { root.button-pressed("("); return accept; }
             if event.text == ")" { root.button-pressed(")"); return accept; }
-            if event.text == "=" || event.text == Key.Return { root.button-pressed("="); return accept; }
+            if event.text == "=" || event.text == Key.Return {
+                root.button-pressed("="); return accept;
+            }
             if event.text == Key.Backspace { root.button-pressed("⌫"); return accept; }
-            if event.text == Key.Escape { root.button-pressed("AC"); return accept; }
+            if event.text == Key.Escape {
+                // Escape first closes the history panel, then acts as AC.
+                if root.hist-open { root.hist-open = false; }
+                else              { root.button-pressed("AC"); }
+                return accept;
+            }
+            // Hex digits — E also doubles as Euler's constant in Scientific.
             if event.text == "a" || event.text == "A" { root.button-pressed("A"); return accept; }
             if event.text == "b" || event.text == "B" { root.button-pressed("B"); return accept; }
             if event.text == "c" || event.text == "C" { root.button-pressed("C"); return accept; }
             if event.text == "d" || event.text == "D" { root.button-pressed("D"); return accept; }
+            if event.text == "e" || event.text == "E" { root.button-pressed("e"); return accept; }
             if event.text == "f" || event.text == "F" { root.button-pressed("F"); return accept; }
             return reject;
         }
@@ -213,7 +229,7 @@ export component MainWindow inherits Window {
 
                 Text {
                     text: root.display-text;
-                    color: LT.t-dis;
+                    color: root.display-preview ? LT.t-exp : LT.t-dis;
                     font-size: 64px;
                     font-weight: 700;
                     horizontal-alignment: right;
@@ -234,9 +250,19 @@ export component MainWindow inherits Window {
                 alignment: center;
                 padding-left: 24px;
                 padding-right: 24px;
-                padding-top: 14px;
-                padding-bottom: 14px;
-                spacing: 10px;
+                padding-top: 10px;
+                padding-bottom: 10px;
+                spacing: 8px;
+
+                // Pending bit-op feedback ("FF AND …") — was always blank
+                Text {
+                    text: root.expr-text;
+                    color: LT.t-exp;
+                    font-size: 13px;
+                    horizontal-alignment: right;
+                    overflow: elide;
+                }
+
                 HorizontalLayout {
                     spacing: 12px;
                     Text {
@@ -333,6 +359,7 @@ export component MainWindow inherits Window {
         if root.current-mode == 1: ScientificPad {
             x: (parent.width - self.width) / 2;
             y: 221px;
+            deg-mode: root.deg-mode;
             button-pressed(lbl) => { root.button-pressed(lbl); }
         }
         if root.current-mode == 2: FinancialPad {
@@ -350,6 +377,7 @@ export component MainWindow inherits Window {
             x: (parent.width - self.width) / 2;
             y: 221px;
             active-base: root.active-base;
+            active-width: root.active-width;
             button-pressed(lbl) => { root.button-pressed(lbl); }
         }
 
@@ -361,6 +389,7 @@ export component MainWindow inherits Window {
             items: root.history;
             open: root.hist-open;
             close => { root.hist-open = false; }
+            cleared => { root.history-cleared(); }
             item-clicked(i) => {
                 root.hist-open = false;
                 root.history-clicked(i);

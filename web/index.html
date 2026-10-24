@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Lion Calculator</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+    background:
+      radial-gradient(1100px 700px at 50% -10%, #23262e 0%, #14161a 55%, #0f1114 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  /* winit appends the app canvas to <body>; keep it centered + elevated. */
+  body > canvas {
+    display: block;
+    border-radius: 14px;
+    box-shadow:
+      0 24px 70px rgba(0, 0, 0, 0.55),
+      0 0 0 1px rgba(255, 255, 255, 0.06);
+    outline: none;
+  }
+</style>
+</head>
+<body>
+<noscript>
+  <p style="color:#e8eaf0;font-family:system-ui;padding:2rem">
+    Lion Calculator needs JavaScript and WebAssembly to run in the browser.
+  </p>
+</noscript>
+<script type="module">
+  // Lion Calculator — WebAssembly bootstrap.
+  // Loads the wasm-bindgen glue, instantiates the module, then starts the
+  // Slint event loop. The window/canvas is created by the runtime itself.
+  import init, { run_app } from './pkg/lion_calculator.js';
+
+  // --- debug instrumentation (rAF/setTimeout counters / DOM observer / GL probe) ---
+  window.__raf = 0;
+  window.__st = 0;
+  const origRaf = window.requestAnimationFrame?.bind(window);
+  if (origRaf) {
+    window.requestAnimationFrame = cb => origRaf(ts => { window.__raf++; cb(ts); });
+  }
+  const origSt = window.setTimeout?.bind(window);
+  if (origSt) {
+    window.setTimeout = (cb, ms, ...a) => origSt(() => { window.__st++; cb(...a); }, ms);
+  }
+  new MutationObserver(muts => {
+    for (const m of muts) for (const n of m.addedNodes) {
+      console.log('LION-DOM: added <' + n.nodeName + '> id=' + (n.id || '') +
+        ' style.w=' + (n.style && n.style.width || ''));
+    }
+  }).observe(document.documentElement, { childList: true, subtree: true });
+  (() => {
+    const c = document.createElement('canvas');
+    const gl = c.getContext('webgl2') || c.getContext('webgl');
+    console.log(gl
+      ? 'LION-GL: ' + gl.getParameter(gl.VERSION) + ' | ' + gl.getParameter(gl.RENDERER)
+      : 'LION-GL: NO WEBGL CONTEXT');
+  })();
+  // --- end instrumentation ---
+
+  const loading = document.createElement('div');
+  loading.style.cssText =
+    'position:fixed;inset:0;display:flex;align-items:center;justify-content:center;' +
+    'color:#9aa3b2;font:500 15px/1 system-ui,sans-serif;letter-spacing:.02em';
+  loading.textContent = 'Loading Lion Calculator\u2026';
+  document.body.appendChild(loading);
+
+  try {
+    await init();
+    run_app();
+    loading.remove();
+  } catch (err) {
+    console.error('LION-CATCH msg=' + (err && err.message) + ' STACK=' + (err && err.stack));
+    if (/Using exceptions for control flow/.test(String(err && err.message))) {
+      // winit's designed escape hatch on wasm: run() never returns normally.
+      // The event loop is already running via requestAnimationFrame —
+      // this exception is expected and must be swallowed.
+      loading.remove();
+    } else {
+      loading.textContent = 'Failed to start: ' + err;
+      loading.style.color = '#ff6b6b';
+    }
+  }
+</script>
+</body>
+</html>

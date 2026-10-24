@@ -8,6 +8,9 @@ import { CalcButton } from "calc_button.slint";
 import { TVMButton } from "tvm_button.slint";
 
 // ── FinancialPad ───────────────────────────────────────────────────────────
+// 6-column grid. The extra "±" key is essential: TVM cash flows need
+// signed values (PV = −1000 for an investment), which were previously
+// impossible to enter.
 export component FinancialPad {
     in property <string> tvm-n:   "?";
     in property <string> tvm-iy:  "?";
@@ -21,6 +24,7 @@ export component FinancialPad {
         spacing: LT.gap;
         padding: LT.pad;
 
+        // Row 0: TVM registers + sign toggle
         Row {
             TVMButton { lbl: "N";   val: root.tvm-n;   active: root.tvm-sel == "N";
                 clicked => { root.button-pressed("TVM:N");   } }
@@ -32,50 +36,64 @@ export component FinancialPad {
                 clicked => { root.button-pressed("TVM:PMT"); } }
             TVMButton { lbl: "FV";  val: root.tvm-fv;  active: root.tvm-sel == "FV";
                 clicked => { root.button-pressed("TVM:FV");  } }
+            CalcButton { lbl: "±"; fg: LT.t-op; clicked => { root.button-pressed("±"); } }
         }
 
+        // Row 1: CPT + AC + backspace + percent + divide + multiply
+        // (6 cells — the wide CPT made this row 7 cells wide, blowing the
+        //  grid to 477px inside a 412px window and shifting every button
+        //  ~32px off its rendered position.)
         Row {
-            CalcButton { lbl: "CPT"; fg: LT.t-acc; clicked => { root.button-pressed("CPT");  } }
+            CalcButton { lbl: "CPT"; fs: 15px; fg: LT.t-acc;
+                clicked => { root.button-pressed("CPT"); } }
             CalcButton { lbl: "AC";  fg: LT.t-dn;  clicked => { root.button-pressed("AC");   } }
             CalcButton { has-icon: true; icon: @image-url("svg/delete-left.svg"); fg: LT.t-dn;  clicked => { root.button-pressed("⌫");   } }
             CalcButton { has-icon: true; icon: @image-url("svg/percent.svg"); fg: LT.t-op;  clicked => { root.button-pressed("%");    } }
             CalcButton { has-icon: true; icon: @image-url("svg/divide.svg"); fg: LT.t-op;  clicked => { root.button-pressed("÷");    } }
-        }
-
-        Row {
-            CalcButton { lbl: "Tax+"; fs: 15px; clicked => { root.button-pressed("Tax+"); } }
-            CalcButton { has-icon: true; icon: @image-url("svg/7.svg"); clicked => { root.button-pressed("7"); } }
-            CalcButton { has-icon: true; icon: @image-url("svg/8.svg"); clicked => { root.button-pressed("8"); } }
-            CalcButton { has-icon: true; icon: @image-url("svg/9.svg"); clicked => { root.button-pressed("9"); } }
             CalcButton { has-icon: true; icon: @image-url("svg/xmark.svg"); fg: LT.t-op; clicked => { root.button-pressed("×"); } }
         }
 
+        // Row 2: Tax+ (wide) + 7 8 9 + minus
         Row {
-            CalcButton { lbl: "Tax−"; fs: 15px; clicked => { root.button-pressed("Tax−"); } }
-            CalcButton { has-icon: true; icon: @image-url("svg/4.svg"); clicked => { root.button-pressed("4"); } }
-            CalcButton { has-icon: true; icon: @image-url("svg/5.svg"); clicked => { root.button-pressed("5"); } }
-            CalcButton { has-icon: true; icon: @image-url("svg/6.svg"); clicked => { root.button-pressed("6"); } }
+            CalcButton { colspan: 2; cols: 2; lbl: "Tax+"; fs: 15px; clicked => { root.button-pressed("Tax+"); } }
+            CalcButton { lbl: "7"; clicked => { root.button-pressed("7"); } }
+            CalcButton { lbl: "8"; clicked => { root.button-pressed("8"); } }
+            CalcButton { lbl: "9"; clicked => { root.button-pressed("9"); } }
             CalcButton { has-icon: true; icon: @image-url("svg/minus.svg"); fg: LT.t-op; clicked => { root.button-pressed("−"); } }
         }
 
+        // Row 3: Tax− (wide) + 4 5 6 + plus
         Row {
-            CalcButton { lbl: "Mar"; clicked => { root.button-pressed("Mar"); } }
-            CalcButton { has-icon: true; icon: @image-url("svg/1.svg"); clicked => { root.button-pressed("1"); } }
-            CalcButton { has-icon: true; icon: @image-url("svg/2.svg"); clicked => { root.button-pressed("2"); } }
-            CalcButton { has-icon: true; icon: @image-url("svg/3.svg"); clicked => { root.button-pressed("3"); } }
+            CalcButton { colspan: 2; cols: 2; lbl: "Tax−"; fs: 15px; clicked => { root.button-pressed("Tax−"); } }
+            CalcButton { lbl: "4"; clicked => { root.button-pressed("4"); } }
+            CalcButton { lbl: "5"; clicked => { root.button-pressed("5"); } }
+            CalcButton { lbl: "6"; clicked => { root.button-pressed("6"); } }
             CalcButton { has-icon: true; icon: @image-url("svg/plus.svg"); fg: LT.t-op; clicked => { root.button-pressed("+"); } }
         }
 
+        // Row 4: Mar (wide) + 1 2 3 + equals
         Row {
-            CalcButton { lbl: "CLR"; fs: 14px; clicked => { root.button-pressed("CLR TVM"); } }
-            CalcButton { colspan: 2; cols: 2; has-icon: true; icon: @image-url("svg/0.svg"); clicked => { root.button-pressed("0"); } }
-            CalcButton { lbl: "."; clicked => { root.button-pressed("."); } }
+            CalcButton { colspan: 2; cols: 2; lbl: "Mar"; clicked => { root.button-pressed("Mar"); } }
+            CalcButton { lbl: "1"; clicked => { root.button-pressed("1"); } }
+            CalcButton { lbl: "2"; clicked => { root.button-pressed("2"); } }
+            CalcButton { lbl: "3"; clicked => { root.button-pressed("3"); } }
             CalcButton {
                 has-icon: true; icon: @image-url("svg/equals.svg");
                 fg: #ffffff;
                 bg: LT.eq; hov: LT.eq-hov; prs: LT.eq-prs;
                 clicked => { root.button-pressed("="); }
             }
+        }
+
+        // Row 5: CLR TVM (wide) + 0 (wide) + dot + backspace
+        Row {
+            CalcButton { colspan: 2; cols: 2; lbl: "CLR TVM"; fs: 13px; fg: LT.t-dim;
+                clicked => { root.button-pressed("CLR TVM"); } }
+            CalcButton { colspan: 2; cols: 2; lbl: "0";
+                clicked => { root.button-pressed("0"); } }
+            CalcButton { lbl: "."; clicked => { root.button-pressed("."); } }
+            CalcButton { has-icon: true; icon: @image-url("svg/delete-left.svg"); fg: LT.t-dn;
+                clicked => { root.button-pressed("⌫"); } }
         }
     }
 }
